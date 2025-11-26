@@ -1,61 +1,23 @@
 {
-  "name": "react-native-calendar-picker",
-  "version": "8.0.5",
-  "description": "Calendar Picker Component for React Native",
-  "engines": {
-    "node": ">=4.0.0"
-  },
-  "peerDependencies": {
-    "date-fns": ">=3.0.0",
-    "react": "*",
-    "react-native": "*"
-  },
-  "main": "./CalendarPicker",
-  "scripts": {
-    "start": "echo \"example folder contains sample app (see README)\" && exit 1",
-    "test": "echo \"example folder contains the tests (see README)\" && exit 1",
-    "lint": "eslint CalendarPicker --fix",
-    "postinstall": "node-git-hooks"
-  },
+  "name": "@appropos/react-native-calendar-picker",
+  "version": "1.0.0",
+  "description": "Forked react-native-calendar-picker with multiple ranges support",
+  "main": "CalendarPicker/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/stephy/CalendarPicker"
+    "url": "local-fork"
   },
   "keywords": [
+    "react-native",
     "calendar",
-    "picker",
-    "calendar",
-    "picker",
-    "date",
-    "picker",
-    "day",
     "picker"
   ],
-  "author": {
-    "name": "Stephani Alves",
-    "email": "alves@stephanimoroni.com"
-  },
   "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/stephy/CalendarPicker/issues"
-  },
-  "homepage": "https://github.com/stephy/CalendarPicker",
-  "maintainers": [
-    {
-      "name": "stephy",
-      "email": "alves@stephanimoroni.com"
-    }
-  ],
-  "directories": {},
-  "dependencies": {
-    "node-git-hooks": "^1.0.1",
-    "prop-types": "^15.6.0",
-    "recyclerlistview": "^4.2.0"
-  },
-  "devDependencies": {
-    "babel-eslint": "^10.1.0",
-    "date-fns": "^3.0.0",
-    "eslint": "^6.8.0",
-    "eslint-plugin-react": "^7.19.0"
+  "peerDependencies": {
+    "date-fns": ">=2.0.0",
+    "prop-types": ">=15.0.0",
+    "react": ">=16.8.0",
+    "react-native": ">=0.60.0"
   }
 }
+

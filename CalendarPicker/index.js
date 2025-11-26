@@ -67,6 +67,12 @@ export default class CalendarPicker extends Component {
     selectedRangeEndStyle: null,
     selectedRangeStyle: null,
     fontScaling: true,
+    // Legacy props for backward compatibility (prefer multipleRanges instead)
+    allowMultipleRanges: false,
+    coloredRanges: {},
+    // New multipleRanges prop: [{ range: [1, 2, 3], style: { backgroundColor: '#FF0000' } }, ...]
+    // Days are 1-indexed (1 = 1st of month, 31 = 31st of month)
+    multipleRanges: [],
   };
 
   componentDidUpdate(prevProps) {
@@ -415,6 +421,10 @@ export default class CalendarPicker extends Component {
       selectedRangeEndStyle: this.props.selectedRangeEndStyle,
       customDatesStyles: this.props.customDatesStyles,
       fontScaling: this.props.fontScaling,
+      allowMultipleRanges: this.props.allowMultipleRanges,
+      coloredRanges: this.props.coloredRanges,
+      scheduleStartDate: this.props.scheduleStartDate,
+      multipleRanges: this.props.multipleRanges,
     };
   }
 

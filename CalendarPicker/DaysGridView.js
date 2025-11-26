@@ -68,11 +68,11 @@ export default class DaysGridView extends Component {
   componentDidUpdate(prevProps) {
     // Optimize re-renders by checking props, with special handling for selected dates.
     // Shallow compare prop changes, excluding selected dates.
-    let excludedProps = []
+    let excludedProps = [];
 
     // Avoid unecessary re-render when selecting date range
     if (this.props.selectedEndDate) {
-      excludedProps = ['selectedStartDate', 'selectedEndDate']
+      excludedProps = ['selectedStartDate', 'selectedEndDate'];
     }
 
     const propDiffs = Utils.shallowDiff(this.props, prevProps, excludedProps);
@@ -119,7 +119,7 @@ export default class DaysGridView extends Component {
               const isSelected = Utils.compareDates(selectedStartDate, thisDay, 'day');
               const isPrevSelected = Utils.compareDates(prevSelStart, thisDay, 'day');
               if (isSelected || isPrevSelected) {
-                daysGrid[i][j] = this.renderDayInCurrentMonth(day);
+                daysGrid[i][j] = this.renderDayInCurrentMonth(day, j);
               }
             }
           }
@@ -129,14 +129,16 @@ export default class DaysGridView extends Component {
     }
   }
 
-  renderDayInCurrentMonth(day) {
+  renderDayInCurrentMonth(day, dayOfWeek) {
     return ({
       day,
       month: this.props.month,
+      dayOfWeek,
       component: (
         <Day
           key={day}
           day={day}
+          dayOfWeek={dayOfWeek}
           {...this.props}
         />
       ),
@@ -194,7 +196,7 @@ export default class DaysGridView extends Component {
           // first row: start current month's day on the correct weekday
           if (j >= startIndex) {
             if (dayOfMonth <= numDaysInMonth) {
-              daysGrid[i].push(this.renderDayInCurrentMonth(dayOfMonth++));
+              daysGrid[i].push(this.renderDayInCurrentMonth(dayOfMonth++, j));
             }
           } else {
             const key = '' + i + j;
@@ -212,7 +214,7 @@ export default class DaysGridView extends Component {
         } else {
           if (dayOfMonth <= numDaysInMonth) {
             lastFilledRow = i;
-            daysGrid[i].push(this.renderDayInCurrentMonth(dayOfMonth++));
+            daysGrid[i].push(this.renderDayInCurrentMonth(dayOfMonth++, j));
           }
           else {
             if (this.props.showDayStragglers && i <= lastFilledRow) {
@@ -274,4 +276,5 @@ DaysGridView.propTypes = {
   disabledDatesTextStyle: stylePropType,
   minRangeDuration: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
   maxRangeDuration: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
+  multipleRanges: PropTypes.array,
 };

@@ -42,6 +42,11 @@ export default function Day(props) {
     minRangeDuration,
     maxRangeDuration,
     enableDateChange,
+    allowMultipleRanges,
+    coloredRanges = {},
+    scheduleStartDate,
+    multipleRanges = [],
+    dayOfWeek,
   } = props;
 
   const thisDay = new Date(year, month, day, 12);
@@ -189,6 +194,110 @@ export default function Day(props) {
       }
     }
 
+    // Handle multiple colored ranges (legacy coworker implementation)
+    if (allowMultipleRanges && coloredRanges && scheduleStartDate) {
+      const dayNumber = getDayNumberFromDate(thisDay, scheduleStartDate);
+      const rangeInfo = getColoredRangeInfo(dayNumber, coloredRanges);
+      
+      if (rangeInfo) {
+        // Check if this is today - if so, skip range styling (will be handled by custom styles)
+        let isToday = isSameDay(thisDay, today);
+        
+        if (isToday) {
+          // Today gets a blue circle - skip range styling
+          computedSelectedDayStyle = [styles.selectedDay, { backgroundColor: "#007AFF" }];
+          selectedDayTextStyle = [styles.selectedDayLabel, { color: "#FFFFFF" }];
+        } else {
+          const { color, textColor, isStart, isEnd } = rangeInfo;
+          const isSingleDay = isStart && isEnd;
+          
+          if (isSingleDay) {
+            // Single day range - use circular style
+            computedSelectedDayStyle = [styles.selectedDay, { backgroundColor: color }];
+            selectedDayTextStyle = [styles.selectedDayLabel, { color: textColor }];
+          } else if (isStart) {
+            // Start of range - rounded left
+            computedSelectedDayStyle = [{
+              width: styles.startDayWrapper.width,
+              height: styles.startDayWrapper.height,
+              borderTopLeftRadius: styles.startDayWrapper.borderTopLeftRadius,
+              borderBottomLeftRadius: styles.startDayWrapper.borderBottomLeftRadius,
+              backgroundColor: color,
+              alignSelf: 'center',
+              justifyContent: 'center'
+            }];
+            selectedDayTextStyle = [styles.selectedDayLabel, { color: textColor }];
+          } else if (isEnd) {
+            // End of range - rounded right
+            computedSelectedDayStyle = [{
+              width: styles.endDayWrapper.width,
+              height: styles.endDayWrapper.height,
+              borderTopRightRadius: styles.endDayWrapper.borderTopRightRadius,
+              borderBottomRightRadius: styles.endDayWrapper.borderBottomRightRadius,
+              backgroundColor: color,
+              alignSelf: 'center',
+              justifyContent: 'center'
+            }];
+            selectedDayTextStyle = [styles.selectedDayLabel, { color: textColor }];
+          } else {
+            // Middle of range - no rounded corners
+            computedSelectedDayStyle = [{
+              width: styles.inRangeDay.width,
+              height: styles.inRangeDay.height,
+              backgroundColor: color,
+              alignSelf: 'center',
+              justifyContent: 'center'
+            }];
+            selectedDayTextStyle = [styles.selectedDayLabel, { color: textColor }];
+          }
+        }
+      }
+    }
+
+    // Handle multipleRanges prop (new implementation with direct day-of-month mapping)
+    if (multipleRanges && multipleRanges.length > 0 && dayOfWeek !== undefined) {
+      const rangeInfo = getMultipleRangeInfo(day, multipleRanges);
+      
+      if (rangeInfo) {
+        const { style, isRangeStart, isRangeEnd, isSingleDay } = rangeInfo;
+        const backgroundColor = style?.backgroundColor || '#5ce600';
+        const textColor = style?.color || style?.textColor || '#FFFFFF';
+        
+        // Determine edge rounding based on range position and week position
+        const isFirstOfWeek = dayOfWeek === 0;
+        const isLastOfWeek = dayOfWeek === 6;
+        
+        // Round left if: start of range OR first day of week (within a range)
+        const roundLeft = isRangeStart || isFirstOfWeek;
+        // Round right if: end of range OR last day of week (within a range)
+        const roundRight = isRangeEnd || isLastOfWeek;
+        
+        const baseRadius = styles.startDayWrapper.borderTopLeftRadius || 20;
+        
+        if (isSingleDay) {
+          // Single day range - full circle
+          computedSelectedDayStyle = [styles.selectedDay, { backgroundColor }];
+          selectedDayTextStyle = [styles.selectedDayLabel, { color: textColor }];
+        } else {
+          // Build style based on which edges should be rounded
+          const rangeStyle = {
+            width: styles.inRangeDay.width,
+            height: styles.inRangeDay.height,
+            backgroundColor,
+            alignSelf: 'center',
+            justifyContent: 'center',
+            borderTopLeftRadius: roundLeft ? baseRadius : 0,
+            borderBottomLeftRadius: roundLeft ? baseRadius : 0,
+            borderTopRightRadius: roundRight ? baseRadius : 0,
+            borderBottomRightRadius: roundRight ? baseRadius : 0,
+          };
+          
+          computedSelectedDayStyle = [rangeStyle];
+          selectedDayTextStyle = [styles.selectedDayLabel, { color: textColor }];
+        }
+      }
+    }
+
     if (dateOutOfRange) { // start or end date selected, and this date outside of range.
       return (
         <View style={[styles.dayWrapper, custom.containerStyle]}>
@@ -253,6 +362,81 @@ function getCustomDateStyle({ customDatesStyles, date }) {
   return {};
 }
 
+// Helper function to get day number from schedule start date
+function getDayNumberFromDate(date, scheduleStartDate) {
+  if (!scheduleStartDate) return null;
+  const startDate = new Date(scheduleStartDate);
+  startDate.setHours(0, 0, 0, 0);
+  const currentDate = new Date(date);
+  currentDate.setHours(0, 0, 0, 0);
+  const diffTime = currentDate.getTime() - startDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  return diffDays + 1; // Day numbers are 1-indexed
+}
+
+// Legacy helper for coloredRanges prop (uses scheduleStartDate-relative day numbers)
+function getColoredRangeInfo(dayNumber, coloredRanges) {
+  if (!dayNumber || !coloredRanges) return null;
+  
+  for (const [color, rangeConfig] of Object.entries(coloredRanges)) {
+    const ranges = rangeConfig.ranges || rangeConfig;
+    if (!Array.isArray(ranges)) continue;
+    
+    for (const range of ranges) {
+      if (!Array.isArray(range) || range.length === 0) continue;
+      
+      const sortedRange = [...range].sort((a, b) => a - b);
+      const rangeStart = sortedRange[0];
+      const rangeEnd = sortedRange[sortedRange.length - 1];
+      
+      if (sortedRange.includes(dayNumber)) {
+        const textColor = rangeConfig.textColor || '#FFFFFF';
+        return {
+          color,
+          textColor,
+          isStart: dayNumber === rangeStart,
+          isEnd: dayNumber === rangeEnd,
+          isInRange: true,
+          range: sortedRange
+        };
+      }
+    }
+  }
+  return null;
+}
+
+// Helper function to check if a day-of-month is in a multipleRanges range
+// multipleRanges format: [{ range: [1, 2, 3], style: { backgroundColor: '#FF0000' } }, ...]
+function getMultipleRangeInfo(dayOfMonth, multipleRanges) {
+  if (!dayOfMonth || !multipleRanges || !Array.isArray(multipleRanges)) return null;
+  
+  for (const rangeConfig of multipleRanges) {
+    if (!rangeConfig || !Array.isArray(rangeConfig.range) || rangeConfig.range.length === 0) continue;
+    
+    // Filter to valid day numbers (1-31) and sort
+    const validDays = rangeConfig.range
+      .filter(d => typeof d === 'number' && d >= 1 && d <= 31)
+      .sort((a, b) => a - b);
+    
+    if (validDays.length === 0) continue;
+    
+    if (validDays.includes(dayOfMonth)) {
+      const rangeStart = validDays[0];
+      const rangeEnd = validDays[validDays.length - 1];
+      const isSingleDay = validDays.length === 1;
+      
+      return {
+        style: rangeConfig.style || {},
+        isRangeStart: dayOfMonth === rangeStart,
+        isRangeEnd: dayOfMonth === rangeEnd,
+        isSingleDay,
+        range: validDays
+      };
+    }
+  }
+  return null;
+}
+
 Day.propTypes = {
   styles: PropTypes.shape({}),
   day: PropTypes.number,
@@ -260,4 +444,12 @@ Day.propTypes = {
   disabledDates: PropTypes.oneOfType([PropTypes.array, PropTypes.func]),
   minRangeDuration: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
   maxRangeDuration: PropTypes.oneOfType([PropTypes.array, PropTypes.number]),
+  allowMultipleRanges: PropTypes.bool,
+  coloredRanges: PropTypes.object,
+  scheduleStartDate: PropTypes.any,
+  multipleRanges: PropTypes.arrayOf(PropTypes.shape({
+    range: PropTypes.arrayOf(PropTypes.number).isRequired,
+    style: PropTypes.object,
+  })),
+  dayOfWeek: PropTypes.number,
 };
