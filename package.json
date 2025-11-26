@@ -17,7 +17,8 @@
     "date-fns": ">=2.0.0",
     "prop-types": ">=15.0.0",
     "react": ">=16.8.0",
-    "react-native": ">=0.60.0"
+    "react-native": ">=0.60.0",
+    "recyclerlistview": ">=4.0.0"
   }
 }
 
