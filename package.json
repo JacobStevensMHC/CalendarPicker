@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "Forked react-native-calendar-picker with multiple ranges support",
   "main": "CalendarPicker/index.js",
+  "types": "index.d.ts",
   "repository": {
     "type": "git",
     "url": "local-fork"
